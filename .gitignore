@@ -1,0 +1,25 @@
+# Maven
+target/
+
+# VS Code
+.vscode/
+
+# IntelliJ
+.idea/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Java
+*.class
+
+# Output simulation
+output/
+
+# H2 DB
+*.mv.db
+*.trace.db
