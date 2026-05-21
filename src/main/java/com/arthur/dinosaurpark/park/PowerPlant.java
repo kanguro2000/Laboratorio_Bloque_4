@@ -29,6 +29,10 @@ public class PowerPlant extends Zone {
         }
     }
 
+    public void recharge(double amount) {
+        energyLevel += amount;
+    }
+
     @Override
     public boolean supportsDinosaur(Dinosaur dinosaur) {
 

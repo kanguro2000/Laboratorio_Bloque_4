@@ -16,7 +16,8 @@ import com.arthur.dinosaurpark.park.ObservationEnclosure;
 import com.arthur.dinosaurpark.park.Park;
 import com.arthur.dinosaurpark.park.PowerPlant;
 import com.arthur.dinosaurpark.park.VisitorZone;
-
+import com.arthur.dinosaurpark.simulation.SimulationEngine;
+import com.arthur.dinosaurpark.simulation.StatisticsManager;
 import com.arthur.dinosaurpark.model.enums.TicketType;
 
 public class Main {
@@ -28,19 +29,12 @@ public class Main {
         Park park = new Park("Jurassic Arthur Park");
 
         CarnivoreZone carnivoreZone = new CarnivoreZone("Carnivore Area", 10);
-
         HerbivoreZone herbivoreZone = new HerbivoreZone("Herbivore Valley", 15);
-
         VisitorZone visitorZone = new VisitorZone("Main Visitor Center", 50);
-
         ArrivalZone arrivalZone = new ArrivalZone("Arrival Area", 100);
-
         CentralHub centralHub = new CentralHub("Central Hub", 200);
-
         BathroomZone bathroomZone = new BathroomZone("Bathrooms", 30, 15);
-
         PowerPlant powerPlant = new PowerPlant("Main Power Plant", 10, 100);
-
         ObservationEnclosure observationZone = new ObservationEnclosure("Observation Area", 20, 90);
 
         park.addZone(carnivoreZone);
@@ -54,23 +48,18 @@ public class Main {
         park.addZone(observationZone);
 
         Tourist tourist1 = new Tourist("Arthur 1", 34, 5000);
-
         Tourist tourist2 = new Tourist("Arthur 2", 45, 6000);
-
         Tourist tourist3 = new Tourist("Arthur 3", 10, 7000);
 
         Ticket ticket1 = new Ticket(tourist1, 1500, TicketType.VIP);
-
         Ticket ticket2 = new Ticket(tourist2, 1100, TicketType.GENERAL);
         Ticket ticket3 = new Ticket(tourist3, 800, TicketType.CHILD);
 
         arrivalZone.sellTicket(ticket1);
-
         arrivalZone.sellTicket(ticket2);
-
         arrivalZone.sellTicket(ticket3);
 
-        CarnivoreDinosaur trex = new CarnivoreDinosaur("T-Rex", 15, 8000, 95);
+        CarnivoreDinosaur trex = new CarnivoreDinosaur("T-Rex", 15, 8000, 99);
         CarnivoreDinosaur trex2 = new CarnivoreDinosaur("T-Rex2", 16, 9000, 99);
 
         HerbivoreDinosaur triceratops = new HerbivoreDinosaur("Triceratops", 12, 3000);
@@ -97,7 +86,6 @@ public class Main {
 
         park.addDinosaurToZone(trex, carnivoreZone);
         park.addDinosaurToZone(trex2, observationZone);
-
         park.addDinosaurToZone(triceratops, herbivoreZone);
         park.addDinosaurToZone(triceratops2, herbivoreZone);
 
@@ -106,7 +94,6 @@ public class Main {
         park.addTouristToZone(tourist3, centralHub);
 
         park.addWorkerToZone(guard, carnivoreZone);
-        park.addWorkerToZone(guard, visitorZone);
         park.addWorkerToZone(guard2, carnivoreZone);
         park.addWorkerToZone(technician, powerPlant);
 
@@ -143,5 +130,10 @@ public class Main {
         System.out.println(tourist1.getName() + " dinero restante: " + tourist1.getMoney());
         System.out.println(tourist2.getName() + " dinero restante: " + tourist2.getMoney());
         System.out.println(tourist3.getName() + " dinero restante: " + tourist3.getMoney());
+
+        SimulationEngine engine = new SimulationEngine(park, 20);
+        engine.startSimulation();
+        StatisticsManager statistics = new StatisticsManager(park);
+        statistics.printStatistics();
     }
 }
