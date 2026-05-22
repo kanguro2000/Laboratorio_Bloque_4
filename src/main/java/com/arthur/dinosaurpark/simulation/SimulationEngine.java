@@ -4,228 +4,335 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import com.arthur.dinosaurpark.config.ParkConfig;
 import com.arthur.dinosaurpark.model.Dinosaur;
 import com.arthur.dinosaurpark.model.Tourist;
+import com.arthur.dinosaurpark.model.enums.DinosaurStatus;
 import com.arthur.dinosaurpark.model.enums.EventType;
 import com.arthur.dinosaurpark.park.Park;
 import com.arthur.dinosaurpark.park.PowerPlant;
+import com.arthur.dinosaurpark.park.Zone;
 
 public class SimulationEngine {
 
+    private static final int EVENT_RANDOM_BOUND = 100;
+    private static final int MAX_EVENTS = 1000;
     private Park park;
-
     private int currentStep;
-
     private int totalSteps;
-
     private Random random;
-
     private List<SimulationEvent> events;
+    private SimulationStatistics statistics;
+    private boolean running;
 
     public SimulationEngine(Park park,int totalSteps) {
 
         this.park = park;
         this.totalSteps = totalSteps;
         this.currentStep = 0;
-        this.random = new Random();
+        this.random = new Random(ParkConfig.getInstance().getSeed());
         this.events = new ArrayList<>();
+        this.statistics = new SimulationStatistics();
+        this.running = false;
     }
 
     public void startSimulation() {
 
-        System.out.println("\n=== INICIANDO SIMULACIÓN ===");
+        running = true;
+        log("\n=== INICIANDO SIMULACIÓN ===");
 
-        while (currentStep < totalSteps) {
+        while (currentStep < totalSteps&& running && !shouldStopSimulation()) {
 
             currentStep++;
-            System.out.println("\n==============================");
-
-            System.out.println("STEP " + currentStep);
-
-            System.out.println("==============================");
-
+            printStepHeader();
             processDinosaurs();
+            processAggressiveDinosaurs();
             processTourists();
             processPowerConsumption();
             generateRandomEvent();
-            pauseSimulation();
+            sleepStep();
         }
 
-        System.out.println("\n=== FIN DE SIMULACIÓN ===");
+        running = false;
+        log("\n=== FIN DE SIMULACIÓN ===");
+        printFinalStatistics();
+    }
+
+    private void printStepHeader() {
+        log("\n==============================");
+        log("STEP " + currentStep);
+        log("==============================");
     }
 
     private void processDinosaurs() {
 
-        System.out.println("\n[DINOSAURIOS]");
-
+        log("\n[DINOSAURIOS]");
         for (Dinosaur dinosaur : park.getDinosaurs()) {
 
-            double newEnergy = dinosaur.getEnergy() - 2;
-
-            if (newEnergy < 0) {
-                newEnergy = 0;
-            }
-
+            double newEnergy =Math.max(0,dinosaur.getEnergy()- SimulationConstants.DINOSAUR_ENERGY_LOSS);
             dinosaur.setEnergy(newEnergy);
+            updateDinosaurStatus(dinosaur);
 
-            System.out.println(dinosaur.getName()+ " | Energía=" + dinosaur.getEnergy());
-
-            validateDinosaurStatus(dinosaur);
+            log(dinosaur.getName()+ " | Energía="+ dinosaur.getEnergy()+ " | Estado="+ dinosaur.getStatus());
         }
     }
 
-    private void validateDinosaurStatus(Dinosaur dinosaur) {
+    private void updateDinosaurStatus(Dinosaur dinosaur) {
 
-        if (dinosaur.getEnergy() <= 20) {
+        if (dinosaur.getEnergy() < 20) {
 
-            registerEvent(EventType.FEEDING,dinosaur.getName()+ " necesita alimentación");
+            dinosaur.setStatus(DinosaurStatus.AGGRESSIVE);
+
+        } else if (dinosaur.getEnergy() < 50) {
+
+            dinosaur.setStatus( DinosaurStatus.HUNGRY);
+
+        } else {
+
+            dinosaur.setStatus(DinosaurStatus.CALM);
+        }
+    }
+
+    private void processAggressiveDinosaurs() {
+
+        log("\n[COMPORTAMIENTO]");
+
+        for (Dinosaur dinosaur : park.getDinosaurs()) {
+
+            if (dinosaur.getStatus() == DinosaurStatus.AGGRESSIVE) {
+                log(dinosaur.getName()+ " está agresivo");
+                for (Tourist tourist : park.getTourists()) {
+                    double newSatisfaction =Math.max(0,tourist.getSatisfaction() - 10);
+                    tourist.setSatisfaction(newSatisfaction);
+                }
+                statistics.incrementAggressiveDinosaurs();
+            }
         }
     }
 
     private void processTourists() {
 
-        System.out.println("\n[TURISTAS]");
+        log("\n[TURISTAS]");
 
         for (Tourist tourist : park.getTourists()) {
-
-            double newSatisfaction =
-                    tourist.getSatisfaction() - 1;
-
-            if (newSatisfaction < 0) {
-                newSatisfaction = 0;
-            }
-
-            tourist.setSatisfaction(
-                    newSatisfaction);
-
-            System.out.println(
-                    tourist.getName()
-                            + " | Satisfacción="
-                            + tourist.getSatisfaction());
-
-            validateTouristStatus(tourist);
-        }
-    }
-
-    private void validateTouristStatus(
-            Tourist tourist) {
-
-        if (tourist.getSatisfaction() <= 30) {
-
-            registerEvent(
-                    EventType.TOURIST_INCIDENT,
-                    tourist.getName()
-                            + " tiene baja satisfacción");
+            double newSatisfaction = Math.max(0,tourist.getSatisfaction() - SimulationConstants.TOURIST_SATISFACTION_LOSS);
+            tourist.setSatisfaction(newSatisfaction);
+            log(tourist.getName()+ " | Satisfacción=" + tourist.getSatisfaction());
         }
     }
 
     private void processPowerConsumption() {
 
-        System.out.println(
-                "\n[ENERGÍA]");
-
-        park.getZones().stream()
-                .filter(zone ->
-                        zone instanceof PowerPlant)
-                .map(zone ->
-                        (PowerPlant) zone)
+        log("\n[ENERGÍA]");
+        park.getZones().stream().filter(zone ->zone instanceof PowerPlant)
+                .map(zone ->(PowerPlant) zone)
                 .forEach(powerPlant -> {
-
-                    powerPlant.consumeEnergy(5);
-
-                    System.out.println(
-                            powerPlant.getName()
-                                    + " | Energía restante="
-                                    + powerPlant.getEnergyLevel());
-
-                    validatePowerPlant(powerPlant);
+                    powerPlant.consumeEnergy( SimulationConstants.POWER_CONSUMPTION);
+                    log(powerPlant.getName()+ " | Energía restante="+ powerPlant.getEnergyLevel());
                 });
-    }
-
-    private void validatePowerPlant(
-            PowerPlant powerPlant) {
-
-        if (powerPlant.getEnergyLevel() <= 20) {
-
-            registerEvent(
-                    EventType.POWER_FAILURE,
-                    "Nivel crítico de energía en "
-                            + powerPlant.getName());
-        }
     }
 
     private void generateRandomEvent() {
 
-        int value =
-                random.nextInt(100);
+        int value = random.nextInt(EVENT_RANDOM_BOUND);
+        SimulationEvent event;
 
         if (value < 25) {
+            handleWeatherAlert();
+            event = new SimulationEvent(EventType.WEATHER_ALERT, "Tormenta detectada");
+            statistics.incrementWeatherAlerts();
 
-            registerEvent(
-                    EventType.WEATHER_ALERT,
-                    "Tormenta detectada");
+        } else if (value < 50) {
+
+            handleFeedingEvent();
+            event = new SimulationEvent(EventType.FEEDING,"Dinosaurio alimentado");
+            statistics.incrementFeedings();
+
+        } else if (value < 75) {
+
+            handleEscapeEvent();
+            event =new SimulationEvent(EventType.ESCAPE, "Dinosaurio escapado");
+            statistics.incrementEscapes();
+
+        } else {
+
+            handlePowerFailure();
+            event = new SimulationEvent(EventType.POWER_FAILURE,"Falla de energía");
+            statistics.incrementPowerFailures();
         }
-        else if (value < 50) {
 
-            registerEvent(
-                    EventType.FEEDING,
-                    "Dinosaurio alimentado");
+        addEvent(event);
+        log("\n[EVENTO]");
+        log(event.toString());
+    }
+
+    private void handleWeatherAlert() {
+
+        log("Tormenta afectando turistas");
+        for (Tourist tourist : park.getTourists()) {
+            double newSatisfaction = Math.max( 0,tourist.getSatisfaction() - 5);
+            tourist.setSatisfaction(newSatisfaction);
         }
-        else if (value < 75) {
 
-            registerEvent(
-                    EventType.ESCAPE,
-                    "Dinosaurio escapado");
-        }
-        else {
+        Zone affectedZone = getRandomZone();
+        if (affectedZone != null) {
 
-            registerEvent(
-                    EventType.POWER_FAILURE,
-                    "Falla de energía en una zona");
+            affectedZone.setOpen(false);
+            log( affectedZone.getName() + " cerrada temporalmente por tormenta");
+            statistics.incrementClosedZones();
         }
     }
 
-    private void registerEvent(
-            EventType type,
-            String description) {
+    private void handleEscapeEvent() {
 
-        SimulationEvent event =
-                new SimulationEvent(
-                        type,
-                        description);
+        if (park.getDinosaurs().isEmpty()) {
+            return;
+        }
+
+        Dinosaur dinosaur = getRandomDinosaur();
+
+        if (dinosaur == null) {
+            return;
+        }
+
+        double newEnergy = Math.max(0, dinosaur.getEnergy() - SimulationConstants.ESCAPE_ENERGY_LOSS);
+        dinosaur.setEnergy(newEnergy);
+        dinosaur.setStatus(DinosaurStatus.AGGRESSIVE);
+        log(dinosaur.getName() + " perdió energía durante escape");
+        for (Tourist tourist : park.getTourists()) {
+            tourist.setSatisfaction( Math.max(0,tourist.getSatisfaction() - 10));
+        }
+    }
+
+    private void handleFeedingEvent() {
+
+        if (park.getDinosaurs().isEmpty()) {
+            return;
+        }
+
+        Dinosaur dinosaur = getRandomDinosaur();
+        if (dinosaur == null) {
+            return;
+        }
+        double newEnergy = Math.min(100,dinosaur.getEnergy() + SimulationConstants.FEEDING_ENERGY_GAIN);
+        dinosaur.setEnergy(newEnergy);
+        updateDinosaurStatus(dinosaur);
+        log(dinosaur.getName() + " fue alimentado");
+    }
+
+    private void handlePowerFailure() {
+
+        park.getZones().stream()
+                .filter(zone -> zone instanceof PowerPlant)
+                .map(zone -> (PowerPlant) zone)
+                .forEach(powerPlant -> { powerPlant.consumeEnergy( SimulationConstants.POWER_FAILURE_DAMAGE);
+                    log("Fallo eléctrico en " + powerPlant.getName());
+                });
+
+        Zone affectedZone = getRandomZone();
+
+        if (affectedZone != null) {
+            affectedZone.setOpen(false);
+            log( affectedZone.getName() + " cerrada por fallo eléctrico");
+            statistics.incrementClosedZones();
+        }
+    }
+
+    private void addEvent( SimulationEvent event) {
+
+        if (events.size() >= MAX_EVENTS) {
+            events.remove(0);
+        }
 
         events.add(event);
-
-        System.out.println(
-                "\n[EVENTO]");
-        System.out.println(event);
     }
 
-    private void pauseSimulation() {
+    private boolean shouldStopSimulation() {
+        boolean noEnergy =park.getZones().stream()
+                        .filter(zone -> zone instanceof PowerPlant)
+                        .map(zone ->(PowerPlant) zone)
+                        .allMatch(powerPlant -> powerPlant.getEnergyLevel() <= 0);
+
+        if (noEnergy) {
+            log("\nSimulación detenida: energía agotada");
+        }
+        return noEnergy;
+    }
+
+    private Dinosaur getRandomDinosaur() {
+
+        if (park.getDinosaurs().isEmpty()) {
+            return null;
+        }
+
+        return park.getDinosaurs().get(random.nextInt(park.getDinosaurs().size()));
+    }
+
+    private Zone getRandomZone() {
+
+        if (park.getZones().isEmpty()) {
+            return null;
+        }
+        return park.getZones().get(random.nextInt(park.getZones().size()));
+    }
+
+    private void printFinalStatistics() {
+
+        log("Eventos totales: "
+                + events.size());
+
+        log("Escapes: "
+                + statistics.getEscapes());
+
+        log("Alimentaciones: "
+                + statistics.getFeedings());
+
+        log("Alertas climáticas: "
+                + statistics.getWeatherAlerts());
+
+        log("Fallos eléctricos: "
+                + statistics.getPowerFailures());
+
+        log("Dinosaurios agresivos: "
+                + statistics.getAggressiveDinosaurs());
+
+        log("Zonas cerradas: "
+                + statistics.getClosedZones());
+
+        log("\n" + statistics);
+    }
+
+    private void sleepStep() {
 
         try {
 
-            Thread.sleep(1500);
+            Thread.sleep(SimulationConstants.STEP_DELAY_MS);
 
         } catch (InterruptedException e) {
 
-            Thread.currentThread()
-                    .interrupt();
-
-            System.out.println(
-                    "Simulación interrumpida");
+            Thread.currentThread().interrupt();
+            log("Simulación interrumpida");
         }
+    }
+
+    private void log(String message) {
+
+        System.out.println(message);
     }
 
     public List<SimulationEvent> getEvents() {
         return events;
     }
 
+    public SimulationStatistics getStatistics() {
+        return statistics;
+    }
+
     public int getCurrentStep() {
         return currentStep;
     }
 
-    public int getTotalSteps() {
-        return totalSteps;
+    public boolean isRunning() {
+        return running;
     }
 }

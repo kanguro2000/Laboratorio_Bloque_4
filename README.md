@@ -22,3 +22,9 @@ mvn exec:java
 
 ```bash
 mvn test
+
+## Resultados:
+
+![alt text](image.png)
+
+![alt text](image-1.png)

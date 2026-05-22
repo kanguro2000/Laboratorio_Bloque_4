@@ -1,0 +1,15 @@
+=== DINOSAUR PARK REPORT ===
+
+Park{Nombre= 'Jurassic Arthur Park', Zonas= 8, Turistas= 3, Dinosaurios= 10, Trabajadores=4}
+
+=== EVENTOS ===
+SimulationEvent{Tipo=FEEDING, Descripción='Dinosaurio alimentado', Fecha=2026-05-21T23:55:19.415993300}
+SimulationEvent{Tipo=FEEDING, Descripción='Dinosaurio alimentado', Fecha=2026-05-21T23:55:20.924534100}
+SimulationEvent{Tipo=ESCAPE, Descripción='Dinosaurio escapado', Fecha=2026-05-21T23:55:22.431873600}
+SimulationEvent{Tipo=WEATHER_ALERT, Descripción='Tormenta detectada', Fecha=2026-05-21T23:55:23.935694500}
+SimulationEvent{Tipo=WEATHER_ALERT, Descripción='Tormenta detectada', Fecha=2026-05-21T23:55:25.442315200}
+SimulationEvent{Tipo=POWER_FAILURE, Descripción='Falla de energía', Fecha=2026-05-21T23:55:26.947758900}
+SimulationEvent{Tipo=POWER_FAILURE, Descripción='Falla de energía', Fecha=2026-05-21T23:55:28.458217700}
+SimulationEvent{Tipo=POWER_FAILURE, Descripción='Falla de energía', Fecha=2026-05-21T23:55:29.966175}
+
+Reporte generado correctamente.

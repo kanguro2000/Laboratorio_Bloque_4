@@ -1,5 +1,6 @@
 package com.arthur.dinosaurpark;
 
+import com.arthur.dinosaurpark.io.ReportGenerator;
 import com.arthur.dinosaurpark.model.CarnivoreDinosaur;
 import com.arthur.dinosaurpark.model.Guard;
 import com.arthur.dinosaurpark.model.HerbivoreDinosaur;
@@ -60,11 +61,17 @@ public class Main {
         arrivalZone.sellTicket(ticket3);
 
         CarnivoreDinosaur trex = new CarnivoreDinosaur("T-Rex", 15, 8000, 99);
-        CarnivoreDinosaur trex2 = new CarnivoreDinosaur("T-Rex2", 16, 9000, 99);
-
+        CarnivoreDinosaur velociraptor = new CarnivoreDinosaur("Velociraptor", 8, 500, 85);
+        CarnivoreDinosaur spinosaurus = new CarnivoreDinosaur("Spinosaurus", 18, 12000, 98);
+        CarnivoreDinosaur carnotaurus = new CarnivoreDinosaur("Carnotaurus", 10, 2500, 80);
+        CarnivoreDinosaur dilophosaurus = new CarnivoreDinosaur("Dilophosaurus", 7, 400, 70);
+        
         HerbivoreDinosaur triceratops = new HerbivoreDinosaur("Triceratops", 12, 3000);
-        HerbivoreDinosaur triceratops2 = new HerbivoreDinosaur("Triceratops2", 13, 3500);
-
+        HerbivoreDinosaur brachiosaurus = new HerbivoreDinosaur("Brachiosaurus", 25, 35000);
+        HerbivoreDinosaur stegosaurus = new HerbivoreDinosaur("Stegosaurus", 14, 5000);
+        HerbivoreDinosaur ankylosaurus = new HerbivoreDinosaur("Ankylosaurus", 16, 6000);
+        HerbivoreDinosaur parasaurolophus = new HerbivoreDinosaur("Parasaurolophus", 11, 2800);
+        
         Guard guard = new Guard("Juan", 1500, 80);
         Guard guard2 = new Guard("Pedro", 1600, 85);
 
@@ -75,19 +82,36 @@ public class Main {
         park.addTourist(tourist2);
         park.addTourist(tourist3);
 
-        park.addDinosaur(trex);
-        park.addDinosaur(trex2);
+        park.addDinosaur(trex);        
         park.addDinosaur(triceratops);
-        park.addDinosaur(triceratops2);
+        park.addDinosaur(velociraptor);
+        park.addDinosaur(spinosaurus);
+        park.addDinosaur(stegosaurus);
+        park.addDinosaur(brachiosaurus);
+        park.addDinosaur(carnotaurus);
+        park.addDinosaur(dilophosaurus);
+        park.addDinosaur(ankylosaurus);
+        park.addDinosaur(parasaurolophus);
+        park.addDinosaurToZone(trex, carnivoreZone);
+        park.addDinosaurToZone(triceratops, herbivoreZone);
+        park.addDinosaurToZone(velociraptor, carnivoreZone);
+        park.addDinosaurToZone(spinosaurus, observationZone);
+        park.addDinosaurToZone(stegosaurus, herbivoreZone);
+        park.addDinosaurToZone(brachiosaurus, herbivoreZone);
+        park.addDinosaurToZone(carnotaurus, carnivoreZone);
+        park.addDinosaurToZone(dilophosaurus, observationZone);
+        park.addDinosaurToZone(ankylosaurus, herbivoreZone);
+        park.addDinosaurToZone(parasaurolophus, herbivoreZone);
+
         park.addWorker(guard);
         park.addWorker(technician);
         park.addWorker(guard2);
         park.addWorker(technician2);
 
         park.addDinosaurToZone(trex, carnivoreZone);
-        park.addDinosaurToZone(trex2, observationZone);
+        
         park.addDinosaurToZone(triceratops, herbivoreZone);
-        park.addDinosaurToZone(triceratops2, herbivoreZone);
+       
 
         park.addTouristToZone(tourist1, visitorZone);
         park.addTouristToZone(tourist2, centralHub);
@@ -131,8 +155,10 @@ public class Main {
         System.out.println(tourist2.getName() + " dinero restante: " + tourist2.getMoney());
         System.out.println(tourist3.getName() + " dinero restante: " + tourist3.getMoney());
 
-        SimulationEngine engine = new SimulationEngine(park, 20);
+        SimulationEngine engine = new SimulationEngine(park, 8);
         engine.startSimulation();
+        ReportGenerator generator = new ReportGenerator();
+        generator.generateSimulationReport(park,engine.getEvents());
         StatisticsManager statistics = new StatisticsManager(park);
         statistics.printStatistics();
     }

@@ -5,5 +5,6 @@ public enum DinosaurStatus {
     AGGRESSIVE,
     ESCAPED,
     SICK,
-    DEAD
+    DEAD,
+    HUNGRY
 }
